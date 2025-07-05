@@ -1,0 +1,4 @@
+# Approved build scripts for security
+# esbuild needs to download platform-specific binaries
+onlyBuiltDependencies:
+  - esbuild
