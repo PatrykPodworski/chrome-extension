@@ -5,6 +5,9 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
 
+    /* JSX */
+    "jsx": "react-jsx",
+
     /* Type Checking */
     "strict": true,
     "noUnusedLocals": true,
