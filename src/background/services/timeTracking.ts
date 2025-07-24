@@ -1,0 +1,119 @@
+import { TimeSession } from "../../types/timeTracking";
+import { isTrackableUrl } from "../../utils/isTrackableUrl";
+import { ActiveSession } from "./activeSession";
+import { getCurrentTime } from "../../utils/getCurrentTime";
+import {
+  setActiveSession,
+  setCurrentActiveTabId,
+  getActiveSession,
+  saveSession,
+  removeActiveSession,
+  getCurrentActiveTabId,
+} from "./stateManager";
+
+export const startTrackingTab = async (
+  tabId: number,
+  url: string | undefined,
+  title: string
+) => {
+  if (!isTrackableUrl(url)) {
+    return;
+  }
+
+  const domain = getDomainFromUrl(url);
+  const startTime = getCurrentTime();
+
+  const activeSession: ActiveSession = {
+    tabId,
+    url,
+    title: title || "Unknown",
+    domain,
+    startTime,
+  };
+
+  await setActiveSession(tabId, activeSession);
+  await setCurrentActiveTabId(tabId);
+
+  console.log(`Started tracking tab ${tabId}: ${url}`);
+};
+
+export const stopTrackingTab = async (tabId: number) => {
+  const activeSession = await getActiveSession(tabId);
+  if (!activeSession) {
+    return;
+  }
+
+  const endTime = getCurrentTime();
+  const duration = endTime - activeSession.startTime;
+
+  // Create completed session
+  const completedSession: TimeSession = {
+    id: crypto.randomUUID(),
+    url: activeSession.url,
+    title: activeSession.title,
+    domain: activeSession.domain,
+    startTime: activeSession.startTime,
+    endTime,
+    duration,
+    tabId,
+  };
+
+  // Save session to storage
+  await saveSession(completedSession);
+
+  // Remove from active sessions
+  await removeActiveSession(tabId);
+
+  console.log(
+    `Stopped tracking tab ${tabId}: ${duration}ms on ${activeSession.url}`
+  );
+};
+
+export const switchActiveTab = async (newTabId: number) => {
+  // Stop tracking current active tab (if any)
+  const currentActiveTabId = await getCurrentActiveTabId();
+  if (currentActiveTabId && currentActiveTabId !== newTabId) {
+    const currentSession = await getActiveSession(currentActiveTabId);
+    if (currentSession) {
+      await stopTrackingTab(currentActiveTabId);
+    }
+  }
+
+  // Start tracking new active tab (if it exists and has a session)
+  const newSession = await getActiveSession(newTabId);
+  if (newSession) {
+    await setCurrentActiveTabId(newTabId);
+  } else {
+    // Get tab info and start tracking
+    try {
+      const tab = await chrome.tabs.get(newTabId);
+      if (tab.url) {
+        await startTrackingTab(newTabId, tab.url, tab.title || "");
+      }
+    } catch (error) {
+      console.log("Could not get tab info:", error);
+    }
+  }
+};
+
+export const getCurrentTimeSpent = async () => {
+  const currentActiveTabId = await getCurrentActiveTabId();
+  if (!currentActiveTabId) {
+    return 0;
+  }
+
+  const activeSession = await getActiveSession(currentActiveTabId);
+  if (!activeSession) {
+    return 0;
+  }
+
+  return getCurrentTime() - activeSession.startTime;
+};
+
+const getDomainFromUrl = (url: string): string => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+};

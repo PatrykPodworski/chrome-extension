@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { formatTime, formatDate } from "../utils/timeUtils";
+import { formatTime, formatDate } from "../../utils/timeFormatters";
 
 export const useCurrentTime = () => {
   const [timeData, setTimeData] = useState<TimeData>({
