@@ -1,25 +1,43 @@
 import { useEffect, useState } from "react";
 import { TimeSession } from "../../types/timeTracking";
-import { SESSIONS_REQUESTED } from "../../background/handlers/messages";
+import { TODAY_SESSIONS_REQUESTED } from "../../background/handlers/messages";
 
 export const useSessions = () => {
   const [sessions, setSessions] = useState<TimeSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSessions = async () => {
+    try {
+      setError(null); // Clear previous errors
+      const response = await chrome.runtime.sendMessage({
+        action: TODAY_SESSIONS_REQUESTED,
+      });
+
+      if (!response) {
+        setError(
+          "Extension background script is not responding. Please reload the extension."
+        );
+        setSessions([]);
+        return;
+      }
+
+      if (response.error) {
+        setError("Unable to load today's sessions. Please try again.");
+        setSessions([]);
+      } else {
+        setSessions(response.sessions || []);
+      }
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      setError("Unable to load today's sessions. Please try again.");
+      setSessions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        const response = await chrome.runtime.sendMessage({
-          action: SESSIONS_REQUESTED,
-        });
-        setSessions(response.sessions || []);
-      } catch (error) {
-        console.error("Error fetching sessions:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchSessions();
 
     // Refresh sessions every 30 seconds
@@ -27,5 +45,5 @@ export const useSessions = () => {
     return () => clearInterval(interval);
   }, []);
 
-  return { sessions, isLoading };
+  return { sessions, isLoading, error, refetch: fetchSessions };
 };

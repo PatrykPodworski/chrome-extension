@@ -1,4 +1,4 @@
-import { getSessions } from "../services/stateManager";
+import { getSessions, getTodaySessions } from "../services/stateManager";
 import {
   getCurrentTimeSpent,
   stopTrackingTab,
@@ -8,6 +8,7 @@ import {
 // TODO: P2 Better action types
 export const CURRENT_TIME_SPENT_REQUESTED = "currentTimeSpentRequested";
 export const SESSIONS_REQUESTED = "sessionsRequested";
+export const TODAY_SESSIONS_REQUESTED = "todaySessionsRequested";
 export const TRACKING_STOPPED = "trackingStopped";
 export const TRACKING_STARTED = "trackingStarted";
 
@@ -29,6 +30,18 @@ export const handleMessage = (
     getSessions().then((sessions) => {
       sendResponse({ sessions });
     });
+    return true;
+  }
+
+  if (request.action === TODAY_SESSIONS_REQUESTED) {
+    getTodaySessions()
+      .then((sessions) => {
+        sendResponse({ sessions });
+      })
+      .catch((error) => {
+        console.error("Error getting today sessions:", error);
+        sendResponse({ error: error.message, sessions: [] });
+      });
     return true;
   }
 

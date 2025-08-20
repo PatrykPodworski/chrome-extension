@@ -1,6 +1,7 @@
 import { TimeSession } from "../../types/timeTracking";
 import { ActiveSession } from "./activeSession";
 import { TimeTrackingState } from "./timeTrackingState";
+import { isToday } from "../../utils/isToday";
 
 export const getActiveSession = async (tabId: number) => {
   const state = await getTimeTrackingState();
@@ -27,7 +28,7 @@ export const removeActiveSession = async (tabId: number) => {
 
   // Clear current active tab if it was the removed tab
   if (state.currentActiveTabId === tabId) {
-    delete state.currentActiveTabId;
+    state.currentActiveTabId = undefined;
   }
 
   await setTimeTrackingState(state);
@@ -36,7 +37,7 @@ export const removeActiveSession = async (tabId: number) => {
 export const setCurrentActiveTabId = async (tabId: number | undefined) => {
   const state = await getTimeTrackingState();
   if (tabId === undefined) {
-    delete state.currentActiveTabId;
+    state.currentActiveTabId = undefined;
   } else {
     state.currentActiveTabId = tabId;
   }
@@ -67,6 +68,16 @@ export const saveSession = async (session: TimeSession) => {
     await chrome.storage.local.set({ sessions });
   } catch (error) {
     console.error("Failed to save session:", error);
+  }
+};
+
+export const getTodaySessions = async (): Promise<TimeSession[]> => {
+  try {
+    const allSessions = await getSessions();
+    return allSessions.filter((session) => isToday(session.startTime));
+  } catch (error) {
+    console.error("Error filtering today sessions:", error);
+    throw new Error("Failed to filter today sessions");
   }
 };
 
