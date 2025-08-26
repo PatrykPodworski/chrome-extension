@@ -2,6 +2,7 @@ import { TimeSession } from "../../types/timeTracking";
 import { isTrackableUrl } from "../../utils/isTrackableUrl";
 import { ActiveSession } from "./activeSession";
 import { getCurrentTime } from "../../utils/getCurrentTime";
+import { getDomainFromUrl } from "../../utils/domainUtils";
 import {
   setActiveSession,
   setCurrentActiveTabId,
@@ -20,13 +21,13 @@ export const startTrackingTab = async (
     return;
   }
 
-  const domain = getDomainFromUrl(url);
+  const domain = getDomainFromUrl(url) || "unknown";
   const startTime = getCurrentTime();
 
   const activeSession: ActiveSession = {
     tabId,
     url,
-    title: title || "Unknown",
+    title,
     domain,
     startTime,
   };
@@ -108,12 +109,4 @@ export const getCurrentTimeSpent = async () => {
   }
 
   return getCurrentTime() - activeSession.startTime;
-};
-
-const getDomainFromUrl = (url: string): string => {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return url;
-  }
 };
