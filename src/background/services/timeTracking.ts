@@ -97,6 +97,45 @@ export const switchActiveTab = async (newTabId: number) => {
   }
 };
 
+export const updateActiveSessionUrl = async (
+  tabId: number,
+  newUrl: string,
+  newTitle: string
+): Promise<void> => {
+  try {
+    // Get the existing active session for this tab
+    const activeSession = await getActiveSession(tabId);
+
+    // If no active session exists, we can't update it
+    if (!activeSession) {
+      console.log(
+        `No active session found for tab ${tabId}, cannot update URL`
+      );
+      return;
+    }
+
+    // Extract domain from new URL
+    const newDomain = getDomainFromUrl(newUrl) || "unknown";
+
+    // Create updated session with new URL and title, preserving start time
+    const updatedSession: ActiveSession = {
+      ...activeSession,
+      url: newUrl,
+      title: newTitle,
+      domain: newDomain,
+      // Preserve original startTime
+    };
+
+    // Save the updated session
+    await setActiveSession(tabId, updatedSession);
+
+    console.log(`Updated session URL for tab ${tabId}: ${newUrl}`);
+  } catch (error) {
+    console.error(`Failed to update session URL for tab ${tabId}:`, error);
+    // Don't throw the error to prevent breaking the calling code
+  }
+};
+
 export const getCurrentTimeSpent = async () => {
   const currentActiveTabId = await getCurrentActiveTabId();
   if (!currentActiveTabId) {
