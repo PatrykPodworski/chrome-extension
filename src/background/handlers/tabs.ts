@@ -9,12 +9,7 @@ export const handleTabUpdate = async (
   changeInfo: chrome.tabs.TabChangeInfo,
   tab: chrome.tabs.Tab
 ) => {
-  // Only act when page is fully loaded and has a URL
-  if (changeInfo.status === "complete" && tab.active) {
-    await startTrackingTab(tabId, tab.url, tab.title || "");
-  }
-
-  // Handle URL changes (navigation within the same tab)
+  // Handle URL changes (navigation within the same tab) - this takes priority
   if (changeInfo.url && tab.url) {
     // Stop tracking current session for this tab
     await stopTrackingTab(tabId);
@@ -23,6 +18,12 @@ export const handleTabUpdate = async (
     if (tab.active) {
       await startTrackingTab(tabId, tab.url, tab.title || "");
     }
+    return; // Exit early to avoid duplicate processing
+  }
+
+  // Only act when page is fully loaded and has a URL (and we haven't already handled URL change)
+  if (changeInfo.status === "complete" && tab.active && tab.url) {
+    await startTrackingTab(tabId, tab.url, tab.title || "");
   }
 };
 
