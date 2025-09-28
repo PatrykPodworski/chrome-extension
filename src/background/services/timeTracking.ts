@@ -12,9 +12,6 @@ import {
   getCurrentActiveTabId,
 } from "./stateManager";
 
-// Track ongoing startTrackingTab operations to prevent duplicates
-const ongoingStartCalls = new Set<number>();
-
 export const startTrackingTab = async (
   tabId: number,
   url: string | undefined,
@@ -24,48 +21,37 @@ export const startTrackingTab = async (
     return;
   }
 
-  // Prevent concurrent calls for same tab
-  if (ongoingStartCalls.has(tabId)) {
-    console.log(`Blocking duplicate startTrackingTab call for tab ${tabId}`);
-    return;
-  }
-  ongoingStartCalls.add(tabId);
-
-  try {
-    // Check if we're already tracking this tab
-    const existingSession = await getActiveSession(tabId);
-    if (existingSession) {
-      // If we're already tracking this tab with the same URL, don't create a duplicate
-      if (existingSession.url === url) {
-        console.log(`Already tracking tab ${tabId} with same URL: ${url}`);
-        await setCurrentActiveTabId(tabId);
-        return;
-      }
-      // If URL changed, stop the existing session first
-      console.log(
-        `URL changed for tab ${tabId}: ${existingSession.url} -> ${url}`
-      );
-      await stopTrackingTab(tabId);
+  // Check if we're already tracking this tab
+  const existingSession = await getActiveSession(tabId);
+  if (existingSession) {
+    // If we're already tracking this tab with the same URL, don't create a duplicate
+    if (existingSession.url === url) {
+      console.log(`Already tracking tab ${tabId} with same URL: ${url}`);
+      await setCurrentActiveTabId(tabId);
+      return;
     }
-
-    const domain = getDomainFromUrl(url) || "unknown";
-    const startTime = getCurrentTime();
-
-    const activeSession: ActiveSession = {
-      tabId,
-      url,
-      title,
-      domain,
-      startTime,
-    };
-
-    await setActiveSession(tabId, activeSession);
-    await setCurrentActiveTabId(tabId);
-
-    console.log(`Started tracking tab ${tabId}: ${url} (${domain})`);
-  } finally {
-    ongoingStartCalls.delete(tabId);
+    // If URL changed, stop the existing session first
+    console.log(
+      `URL changed for tab ${tabId}: ${existingSession.url} -> ${url}`
+    );
+    await stopTrackingTab(tabId);
   }
+
+  const domain = getDomainFromUrl(url) || "unknown";
+  const startTime = getCurrentTime();
+
+  const activeSession: ActiveSession = {
+    tabId,
+    url,
+    title,
+    domain,
+    startTime,
+  };
+
+  await setActiveSession(tabId, activeSession);
+  await setCurrentActiveTabId(tabId);
+
+  console.log(`Started tracking tab ${tabId}: ${url} (${domain})`);
 };
 
 export const stopTrackingTab = async (tabId: number) => {
@@ -142,38 +128,51 @@ export const updateActiveSessionUrl = async (
   newUrl: string,
   newTitle: string
 ): Promise<void> => {
-  try {
-    // Get the existing active session for this tab
-    const activeSession = await getActiveSession(tabId);
-
-    // If no active session exists, we can't update it
-    if (!activeSession) {
-      console.log(
-        `No active session found for tab ${tabId}, cannot update URL`
-      );
-      return;
-    }
-
-    // Extract domain from new URL
-    const newDomain = getDomainFromUrl(newUrl) || "unknown";
-
-    // Create updated session with new URL and title, preserving start time
-    const updatedSession: ActiveSession = {
-      ...activeSession,
-      url: newUrl,
-      title: newTitle,
-      domain: newDomain,
-      // Preserve original startTime
-    };
-
-    // Save the updated session
-    await setActiveSession(tabId, updatedSession);
-
-    console.log(`Updated session URL for tab ${tabId}: ${newUrl}`);
-  } catch (error) {
-    console.error(`Failed to update session URL for tab ${tabId}:`, error);
-    // Don't throw the error to prevent breaking the calling code
+  // Validate URL before proceeding
+  if (!isTrackableUrl(newUrl)) {
+    console.log(
+      `URL ${newUrl} is not trackable, stopping session for tab ${tabId} instead`
+    );
+    await stopTrackingTab(tabId);
+    return;
   }
+
+  // Get the existing active session for this tab
+  const activeSession = await getActiveSession(tabId);
+
+  // If no active session exists, we can't update it
+  if (!activeSession) {
+    console.log(
+      `No active session found for tab ${tabId}, cannot update URL to ${newUrl}`
+    );
+    return;
+  }
+
+  const oldUrl = activeSession.url;
+  const oldDomain = activeSession.domain;
+
+  // Extract domain from new URL
+  const newDomain = getDomainFromUrl(newUrl) || "unknown";
+
+  console.log(
+    `Same-domain URL transition for tab ${tabId}: ${oldUrl} -> ${newUrl} (domain: ${oldDomain} -> ${newDomain})`
+  );
+
+  // Create updated session with new URL and title, preserving start time
+  const updatedSession: ActiveSession = {
+    ...activeSession,
+    url: newUrl,
+    title: newTitle,
+    domain: newDomain,
+    // Preserve original startTime
+  };
+
+  // Save the updated session
+  await setActiveSession(tabId, updatedSession);
+
+  console.log(
+    `Successfully updated session for tab ${tabId}: ${newUrl} (${newDomain})`
+  );
 };
 
 export const getCurrentTimeSpent = async () => {

@@ -18,7 +18,7 @@ const RecentSessions = ({ sessions }: RecentSessionsProps) => {
                   {session.title}
                 </div>
                 <div className="text-slate-400 text-xs truncate mt-1">
-                  {session.domain}
+                  {session.domain} • Tab {session.tabId}
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <div className="text-slate-400 text-xs">
