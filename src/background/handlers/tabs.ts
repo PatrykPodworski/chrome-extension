@@ -21,9 +21,15 @@ export const handleTabUpdate = async (
     return; // Exit early to avoid duplicate processing
   }
 
-  // Only act when page is fully loaded and has a URL (and we haven't already handled URL change)
-  if (changeInfo.status === "complete" && tab.active && tab.url) {
-    await startTrackingTab(tabId, tab.url, tab.title || "");
+  // Only act when page is fully loaded, has a URL, and no URL change was processed
+  if (changeInfo.status === "complete" && tab.active && tab.url && !changeInfo.url) {
+    // Check if we already have an active session to prevent duplicates
+    const { getActiveSession } = await import("../services/stateManager");
+    const existingSession = await getActiveSession(tabId);
+
+    if (!existingSession) {
+      await startTrackingTab(tabId, tab.url, tab.title || "");
+    }
   }
 };
 
