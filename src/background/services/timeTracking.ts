@@ -12,6 +12,9 @@ import {
   getCurrentActiveTabId,
 } from "./stateManager";
 
+// Track ongoing startTrackingTab operations to prevent duplicates
+const ongoingStartCalls = new Set<number>();
+
 export const startTrackingTab = async (
   tabId: number,
   url: string | undefined,
@@ -21,35 +24,48 @@ export const startTrackingTab = async (
     return;
   }
 
-  // Check if we're already tracking this tab
-  const existingSession = await getActiveSession(tabId);
-  if (existingSession) {
-    // If we're already tracking this tab with the same URL, don't create a duplicate
-    if (existingSession.url === url) {
-      console.log(`Already tracking tab ${tabId} with same URL: ${url}`);
-      await setCurrentActiveTabId(tabId);
-      return;
-    }
-    // If URL changed, stop the existing session first
-    console.log(`URL changed for tab ${tabId}: ${existingSession.url} -> ${url}`);
-    await stopTrackingTab(tabId);
+  // Prevent concurrent calls for same tab
+  if (ongoingStartCalls.has(tabId)) {
+    console.log(`Blocking duplicate startTrackingTab call for tab ${tabId}`);
+    return;
   }
+  ongoingStartCalls.add(tabId);
 
-  const domain = getDomainFromUrl(url) || "unknown";
-  const startTime = getCurrentTime();
+  try {
+    // Check if we're already tracking this tab
+    const existingSession = await getActiveSession(tabId);
+    if (existingSession) {
+      // If we're already tracking this tab with the same URL, don't create a duplicate
+      if (existingSession.url === url) {
+        console.log(`Already tracking tab ${tabId} with same URL: ${url}`);
+        await setCurrentActiveTabId(tabId);
+        return;
+      }
+      // If URL changed, stop the existing session first
+      console.log(
+        `URL changed for tab ${tabId}: ${existingSession.url} -> ${url}`
+      );
+      await stopTrackingTab(tabId);
+    }
 
-  const activeSession: ActiveSession = {
-    tabId,
-    url,
-    title,
-    domain,
-    startTime,
-  };
+    const domain = getDomainFromUrl(url) || "unknown";
+    const startTime = getCurrentTime();
 
-  await setActiveSession(tabId, activeSession);
-  await setCurrentActiveTabId(tabId);
+    const activeSession: ActiveSession = {
+      tabId,
+      url,
+      title,
+      domain,
+      startTime,
+    };
 
-  console.log(`Started tracking tab ${tabId}: ${url} (${domain})`);
+    await setActiveSession(tabId, activeSession);
+    await setCurrentActiveTabId(tabId);
+
+    console.log(`Started tracking tab ${tabId}: ${url} (${domain})`);
+  } finally {
+    ongoingStartCalls.delete(tabId);
+  }
 };
 
 export const stopTrackingTab = async (tabId: number) => {
@@ -81,7 +97,9 @@ export const stopTrackingTab = async (tabId: number) => {
   await removeActiveSession(tabId);
 
   console.log(
-    `Stopped tracking tab ${tabId}: ${Math.round(duration/1000)}s on ${activeSession.domain} (${activeSession.url})`
+    `Stopped tracking tab ${tabId}: ${Math.round(duration / 1000)}s on ${
+      activeSession.domain
+    } (${activeSession.url})`
   );
 };
 
@@ -93,7 +111,9 @@ export const switchActiveTab = async (newTabId: number) => {
   if (currentActiveTabId && currentActiveTabId !== newTabId) {
     const currentSession = await getActiveSession(currentActiveTabId);
     if (currentSession) {
-      console.log(`Stopping current active session for tab ${currentActiveTabId}`);
+      console.log(
+        `Stopping current active session for tab ${currentActiveTabId}`
+      );
       await stopTrackingTab(currentActiveTabId);
     }
   }
@@ -101,11 +121,11 @@ export const switchActiveTab = async (newTabId: number) => {
   // Start tracking new active tab (if it exists and has a session)
   const newSession = await getActiveSession(newTabId);
   if (newSession) {
-    console.log(`Tab ${newTabId} already has active session, setting as current active`);
+    console.log(
+      `Tab ${newTabId} already has active session, setting as current active`
+    );
     await setCurrentActiveTabId(newTabId);
   } else {
-    // Get tab info and start tracking
-    console.log(`Getting tab info to start tracking tab ${newTabId}`);
     try {
       const tab = await chrome.tabs.get(newTabId);
       if (tab.url) {
