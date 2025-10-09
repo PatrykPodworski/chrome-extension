@@ -14,6 +14,11 @@ export const getCurrentActiveTabId = async () => {
   return state.currentActiveTabId;
 };
 
+export const getAllActiveSessions = async () => {
+  const state = await getTimeTrackingState();
+  return state.activeSessions;
+};
+
 export const setActiveSession = async (
   tabId: number,
   session: ActiveSession

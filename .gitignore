@@ -4,5 +4,4 @@ node_modules/
 # Build output
 dist/
 
-# Kiro IDE
-.kiro/
+.claude/plans
