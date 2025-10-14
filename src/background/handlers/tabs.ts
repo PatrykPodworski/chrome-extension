@@ -34,7 +34,12 @@ export const handleTabUpdate = async (
   }
 
   // Only act when page is fully loaded, has a URL, and no URL change was processed
-  if (changeInfo.status === "complete" && tab.active && tab.url && !changeInfo.url) {
+  if (
+    changeInfo.status === "complete" &&
+    tab.active &&
+    tab.url &&
+    !changeInfo.url
+  ) {
     // Check if we already have an active session to prevent duplicates
     const existingSession = await getActiveSession(tabId);
 

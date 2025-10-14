@@ -1,7 +1,5 @@
 import { getSessions, getTodaySessions } from "../services/stateManager";
-import {
-  getCurrentTimeSpent,
-} from "../services/timeTracking";
+import { getCurrentTimeSpent } from "../services/timeTracking";
 
 // TODO: P2 Better action types
 export const CURRENT_TIME_SPENT_REQUESTED = "currentTimeSpentRequested";
@@ -13,8 +11,6 @@ export const handleMessage = (
   _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: unknown) => void
 ) => {
-  console.log("Message received in background:", request);
-
   if (request.action === CURRENT_TIME_SPENT_REQUESTED) {
     getCurrentTimeSpent().then((timeSpent) => {
       sendResponse({ timeSpent });
