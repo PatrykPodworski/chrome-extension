@@ -193,7 +193,9 @@ export const stopAllActiveSessions = async () => {
 
   console.log(`Stopping ${tabIds.length} active sessions`);
 
-  await Promise.all(tabIds.map((tabId) => stopTrackingTab(tabId)));
+  for (const tabId of tabIds) {
+    await stopTrackingTab(tabId);
+  }
 };
 
 export const cleanupStaleSessions = async () => {
@@ -207,31 +209,29 @@ export const cleanupStaleSessions = async () => {
 
   console.log(`Cleaning up ${tabIds.length} stale sessions from previous run`);
 
-  await Promise.all(
-    tabIds.map(async (tabId) => {
-      const activeSession = activeSessions[tabId];
-      if (!activeSession) {
-        return;
-      }
+  for (const tabId of tabIds) {
+    const activeSession = activeSessions[tabId];
+    if (!activeSession) {
+      continue;
+    }
 
-      // Create a zero-duration session (endTime = startTime)
-      const staleSession: TimeSession = {
-        id: crypto.randomUUID(),
-        url: activeSession.url,
-        title: activeSession.title,
-        domain: activeSession.domain,
-        startTime: activeSession.startTime,
-        endTime: activeSession.startTime,
-        duration: 0,
-        tabId,
-      };
+    // Create a zero-duration session (endTime = startTime)
+    const staleSession: TimeSession = {
+      id: crypto.randomUUID(),
+      url: activeSession.url,
+      title: activeSession.title,
+      domain: activeSession.domain,
+      startTime: activeSession.startTime,
+      endTime: activeSession.startTime,
+      duration: 0,
+      tabId,
+    };
 
-      await saveSession(staleSession);
-      await removeActiveSession(tabId);
+    await saveSession(staleSession);
+    await removeActiveSession(tabId);
 
-      console.log(
-        `Cleaned up stale session for tab ${tabId}: ${activeSession.domain}`
-      );
-    })
-  );
+    console.log(
+      `Cleaned up stale session for tab ${tabId}: ${activeSession.domain}`
+    );
+  }
 };
