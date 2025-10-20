@@ -1,7 +1,6 @@
 import { ActiveSession } from "./activeSession";
 import { TimeTrackingState } from "./timeTrackingState";
 
-// TODO: P1 Change the sessions storage solution to avoid quota exceeded error
 export const getActiveSession = async (tabId: number) => {
   const state = await getTimeTrackingState();
   return state.activeSessions[tabId];
