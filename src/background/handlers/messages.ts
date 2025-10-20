@@ -1,9 +1,8 @@
-import { getSessions, getTodaySessions } from "../services/stateManager";
+import { getTodaySessions } from "../services/sessionStorage";
 import { getCurrentTimeSpent } from "../services/timeTracking";
 
 // TODO: P2 Better action types
 export const CURRENT_TIME_SPENT_REQUESTED = "currentTimeSpentRequested";
-export const SESSIONS_REQUESTED = "sessionsRequested";
 export const TODAY_SESSIONS_REQUESTED = "todaySessionsRequested";
 
 export const handleMessage = (
@@ -14,13 +13,6 @@ export const handleMessage = (
   if (request.action === CURRENT_TIME_SPENT_REQUESTED) {
     getCurrentTimeSpent().then((timeSpent) => {
       sendResponse({ timeSpent });
-    });
-    return true;
-  }
-
-  if (request.action === SESSIONS_REQUESTED) {
-    getSessions().then((sessions) => {
-      sendResponse({ sessions });
     });
     return true;
   }
