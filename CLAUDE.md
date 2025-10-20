@@ -26,7 +26,9 @@ This is a Chrome Extension (Manifest V3) built with TypeScript, React, and Vite.
   - `handlers/messages.ts` - Inter-component communication
   - `handlers/tabs.ts` - Tab lifecycle management (creation, updates, removal, activation)
   - `services/timeTracking.ts` - Core time tracking business logic
-  - `services/stateManager.ts` - Chrome storage state management
+  - `services/activeSessionManager.ts` - Active session state management (chrome.storage.local)
+  - `services/sessionStorage.ts` - Completed session storage operations (IndexedDB)
+  - `services/database.ts` - IndexedDB connection and schema definition
   - `services/activeSession.ts` - Active session data models
 
 **User Interfaces**
@@ -61,7 +63,7 @@ The extension tracks time spent on trackable URLs by:
 2. Stopping sessions when tabs are closed/deactivated
 3. Switching tracking between tabs based on user focus
 4. Updating sessions when URLs change within the same tab
-5. Storing completed sessions in Chrome storage for dashboard display
+5. Storing completed sessions in IndexedDB for dashboard display
 
 ### Build System
 
@@ -72,14 +74,24 @@ The extension tracks time spent on trackable URLs by:
 
 ### Storage
 
-Uses Chrome's storage API to persist:
-- Active sessions across browser restarts
-- Completed time tracking sessions
-- Current active tab state
+The extension uses a dual-storage architecture optimized for different data types:
+
+**Chrome Storage (chrome.storage.local)**
+- Active sessions (small dataset, needs fast sync across service worker restarts)
+- Current active tab ID
+- Stored via `activeSessionManager.ts`
+
+**IndexedDB**
+- Completed time tracking sessions (large dataset, can grow to thousands of records)
+- Uses `idb` library for promise-based access
+- Database: "TimeTrackingDB" with "sessions" object store
+- Indexes on `startTime` (by_date), `domain` (by_domain), and `startTime` (by_startTime) for efficient queries
+- Managed via `sessionStorage.ts` and `database.ts`
+- Avoids chrome.storage quota limits (~10MB)
 
 ### Testing
 
 - Unit tests are configured with Vitest
-- Existing tests for domain utilities demonstrate testing patterns
 - Tests run in Node.js environment with global test APIs enabled
-- Never attribute Claude Code in commit messages
+- `fake-indexeddb` is used to mock IndexedDB in tests
+- Existing tests for domain utilities and storage layers demonstrate testing patterns
