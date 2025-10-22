@@ -1,6 +1,6 @@
 import { getDatabase } from "./database";
 import { TimeSession } from "../../types/timeTracking";
-import { getEndOfToday, getStartOfToday, isToday } from "../../utils/todayUtils";
+import { getEndOfToday, getStartOfToday } from "../../utils/todayUtils";
 
 export const saveSession = async (session: TimeSession): Promise<void> => {
   try {
@@ -39,13 +39,10 @@ export const getTodaySessions = async (): Promise<TimeSession[]> => {
       getEndOfToday().getTime()
     );
 
-    const allSessions = await db.getAllFromIndex(
+    const todaySessions = await db.getAllFromIndex(
       "sessions",
       "by_startTime",
       range
-    );
-    const todaySessions = allSessions.filter((session) =>
-      isToday(session.startTime)
     );
 
     console.log(`Retrieved ${todaySessions.length} sessions from today`);

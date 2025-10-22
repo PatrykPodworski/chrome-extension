@@ -6,6 +6,7 @@ import {
   handleTabActivation,
 } from "./handlers/tabs";
 import { handleWindowRemoved } from "./handlers/windows";
+import { closeDatabase } from "./services/database";
 
 // Listen for extension startup (both install and browser restart)
 chrome.runtime.onStartup.addListener(handleStartup);
@@ -27,5 +28,11 @@ chrome.tabs.onActivated.addListener(handleTabActivation);
 
 // Listen for window removal (browser close)
 chrome.windows.onRemoved.addListener(handleWindowRemoved);
+
+// Listen for service worker suspension to cleanup resources
+chrome.runtime.onSuspend.addListener(async () => {
+  console.log("Service worker suspending, closing database connection");
+  await closeDatabase();
+});
 
 export {};
