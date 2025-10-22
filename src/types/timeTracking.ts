@@ -4,8 +4,8 @@ export interface TimeSession {
   title: string;
   domain: string;
   startTime: number;
-  endTime?: number;
-  duration?: number; // in milliseconds
+  endTime: number;
+  duration: number; // in milliseconds
   tabId: number;
 }
 
