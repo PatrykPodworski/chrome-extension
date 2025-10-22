@@ -7,7 +7,7 @@ export const useStatsData = (sessions: TimeSession[]) => {
     return sessions.reduce(
       (acc, session) => {
         const domain = session.domain;
-        const duration = session.duration || 0;
+        const duration = session.duration;
 
         // Update domain stats
         if (!acc.domainStats[domain]) {

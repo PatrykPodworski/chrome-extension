@@ -25,7 +25,7 @@ const RecentSessions = ({ sessions }: RecentSessionsProps) => {
                     {new Date(session.startTime).toLocaleTimeString()}
                   </div>
                   <div className="text-green-300 text-xs font-mono">
-                    {formatDuration(session.duration || 0)}
+                    {formatDuration(session.duration)}
                   </div>
                 </div>
               </div>

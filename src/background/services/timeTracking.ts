@@ -7,11 +7,11 @@ import {
   setActiveSession,
   setCurrentActiveTabId,
   getActiveSession,
-  saveSession,
   removeActiveSession,
   getCurrentActiveTabId,
   getAllActiveSessions,
-} from "./stateManager";
+} from "./activeSessionManager";
+import { saveSession } from "./sessionStorage";
 
 export const startTrackingTab = async (
   tabId: number,

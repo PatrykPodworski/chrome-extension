@@ -5,7 +5,7 @@ import {
   updateActiveSessionUrl,
 } from "../services/timeTracking";
 import { isSameDomain } from "../../utils/domainUtils";
-import { getActiveSession } from "../services/stateManager";
+import { getActiveSession } from "../services/activeSessionManager";
 
 export const handleTabUpdate = async (
   tabId: number,
