@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { getDatabase } from './database';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { getDatabase, closeDatabase } from './database';
 
 // Mock IndexedDB for Node.js test environment
 import 'fake-indexeddb/auto';
@@ -7,6 +7,11 @@ import 'fake-indexeddb/auto';
 beforeAll(() => {
   // Set up IndexedDB globals for testing
   globalThis.indexedDB = indexedDB;
+});
+
+beforeEach(async () => {
+  // Close database before each test to get a fresh instance
+  await closeDatabase();
 });
 
 describe('database', () => {

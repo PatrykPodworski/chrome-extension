@@ -1,6 +1,6 @@
 import { getDatabase } from "./database";
 import { TimeSession } from "../../types/timeTracking";
-import { isToday } from "../../utils/isToday";
+import { getEndOfToday, getStartOfToday, isToday } from "../../utils/todayUtils";
 
 export const saveSession = async (session: TimeSession): Promise<void> => {
   try {
@@ -30,12 +30,20 @@ export const saveSessions = async (sessions: TimeSession[]): Promise<void> => {
   }
 };
 
-// TODO: P2 Optimize to use IDBKeyRange
 export const getTodaySessions = async (): Promise<TimeSession[]> => {
   try {
     const db = await getDatabase();
 
-    const allSessions = await db.getAllFromIndex("sessions", "by_startTime");
+    const range = IDBKeyRange.bound(
+      getStartOfToday().getTime(),
+      getEndOfToday().getTime()
+    );
+
+    const allSessions = await db.getAllFromIndex(
+      "sessions",
+      "by_startTime",
+      range
+    );
     const todaySessions = allSessions.filter((session) =>
       isToday(session.startTime)
     );

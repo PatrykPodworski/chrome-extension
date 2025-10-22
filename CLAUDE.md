@@ -54,7 +54,7 @@ Key TypeScript interfaces in `src/types/timeTracking.ts`:
 - `src/utils/timeFormatters.ts` - Time formatting utilities
 - `src/utils/isTrackableUrl.ts` - Determines if URLs should be tracked (excludes chrome:// pages)
 - `src/utils/getCurrentTime.ts` - Consistent timestamp generation
-- `src/utils/isToday.ts` - Date comparison utilities
+- `src/utils/todayUtils.ts` - Date comparison utilities for today's date
 
 ### Time Tracking Logic
 
