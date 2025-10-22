@@ -85,7 +85,7 @@ The extension uses a dual-storage architecture optimized for different data type
 - Completed time tracking sessions (large dataset, can grow to thousands of records)
 - Uses `idb` library for promise-based access
 - Database: "TimeTrackingDB" with "sessions" object store
-- Indexes on `startTime` (by_date), `domain` (by_domain), and `startTime` (by_startTime) for efficient queries
+- Indexes on `domain` (by_domain) and `startTime` (by_startTime) for efficient queries
 - Managed via `sessionStorage.ts` and `database.ts`
 - Avoids chrome.storage quota limits (~10MB)
 

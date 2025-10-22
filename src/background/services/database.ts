@@ -1,5 +1,5 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { TimeSession } from '../../types/timeTracking';
+import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { TimeSession } from "../../types/timeTracking";
 
 /**
  * Define database schema with TypeScript
@@ -10,14 +10,13 @@ interface TimeTrackingDB extends DBSchema {
     key: string; // session.id
     value: TimeSession;
     indexes: {
-      'by_date': number; // startTime for daily queries
-      'by_domain': string; // domain for aggregation
-      'by_startTime': number; // for sorting
+      by_domain: string; // domain for aggregation
+      by_startTime: number; // startTime for sorting and date filtering
     };
   };
 }
 
-const DB_NAME = 'TimeTrackingDB';
+const DB_NAME = "TimeTrackingDB";
 const DB_VERSION = 1;
 
 /**
@@ -34,26 +33,27 @@ export const getDatabase = async (): Promise<IDBPDatabase<TimeTrackingDB>> => {
       // Version 1: Initial schema
       if (oldVersion < 1) {
         // Create sessions object store
-        const sessionStore = db.createObjectStore('sessions', {
-          keyPath: 'id', // Use session.id as primary key
+        const sessionStore = db.createObjectStore("sessions", {
+          keyPath: "id", // Use session.id as primary key
         });
 
         // Create indexes for efficient queries
-        sessionStore.createIndex('by_date', 'startTime', { unique: false });
-        sessionStore.createIndex('by_domain', 'domain', { unique: false });
-        sessionStore.createIndex('by_startTime', 'startTime', { unique: false });
+        sessionStore.createIndex("by_domain", "domain", { unique: false });
+        sessionStore.createIndex("by_startTime", "startTime", {
+          unique: false,
+        });
 
-        console.log('Created sessions store with indexes');
+        console.log("Created sessions store with indexes");
       }
 
       // Future versions can add migration logic here
       // if (oldVersion < 2) { ... }
     },
     blocked() {
-      console.warn('Database blocked - another tab may be open');
+      console.warn("Database blocked - another tab may be open");
     },
     blocking() {
-      console.warn('This connection is blocking a newer version');
+      console.warn("This connection is blocking a newer version");
     },
   });
 };

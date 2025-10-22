@@ -25,7 +25,6 @@ describe('database', () => {
     const tx = db.transaction('sessions', 'readonly');
     const store = tx.objectStore('sessions');
 
-    expect(store.indexNames.contains('by_date')).toBe(true);
     expect(store.indexNames.contains('by_domain')).toBe(true);
     expect(store.indexNames.contains('by_startTime')).toBe(true);
 
